@@ -76,10 +76,9 @@ class FormManagerTestCase(unittest.TestCase):
         fm.kill()
 
     def test_rerun(self):
-        return
-        # doesn't work yet because it returns
         # Invalid File Descriptor -1 for socket
-        # for whatever magical reason O_o
+        # doesn't work, closed socket can't be reopen apparently
+        # https://bugs.python.org/msg278691
         from kivy.garden.formmanager import FormManager
         fm = FormManager()
         self._fm_instance = fm
@@ -88,7 +87,6 @@ class FormManagerTestCase(unittest.TestCase):
         self.assertEqual(fm.port, 0)
 
         fm.run()
-        print(fm._server_thread.name, 'test_rerun(self):')
         port = fm.port
         self.assertTrue(fm.running)
         self.assertTrue(port)
@@ -98,11 +96,10 @@ class FormManagerTestCase(unittest.TestCase):
         self.assertTrue(fm.port)
         self.assertEqual(port, fm.port)
 
-        fm.run()
-        self.assertTrue(fm.running)
-        self.assertTrue(fm.port)
-        self.assertEqual(port, fm.port)
-
+        # assert the ValueError, because IFD -1
+        # raises STDLIB selectors.py's _fileobj_to_fd
+        with self.assertRaises(ValueError):
+            fm.server.serve_forever()
         fm.stop()
         self.assertFalse(fm.running)
         self.assertTrue(fm.port)
@@ -309,7 +306,7 @@ class FormTestCase(unittest.TestCase):
 
         # Form application is basically another Kivy app run in
         # a separate process, therefore we have to wait for it to load
-        sleep(1)
+        sleep(2)
 
         self.assertTrue(fm.forms[form.name]['active'])
 
@@ -326,23 +323,11 @@ class FormTestCase(unittest.TestCase):
         fm.kill()
         rmtree(tmpdir)
 
-    def test_add_form(self):
-        return
-        from kivy.garden.formmanager import FormManager, Form
-
-        tmpfd, tmpfn = mkdtemp()
-        FormTestCase._tmpfiles.append([tmpfd, tmpfn])
-
-        form = Form(tmpfn)
-        self.assertEqual(
-            form.name,
-            split_ext(basename(abspath(tmpfn)))[0]
-        )
-
     def tearDown(self):
         # in case of assertion error, always kill the server
         if self._fm_instance:
             self._fm_instance.kill()
+        sleep(1)
 
 
 def tearDownModule():

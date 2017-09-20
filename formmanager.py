@@ -62,13 +62,8 @@ filename of the :class:`Form`.::
     # make 'form1' print something
     fm.request_action('form1', 'print', 'Hello, World')
 
-    # XXX needs fixing! ###############################
-    # # stop the server if necessary for some reason
-    # fm.stop()
-
-    # # and restart it again
-    # fm.run()
-    # #################################################
+    # stop the server if necessary for some reason, can't be re-run
+    fm.stop()
 
     # When done with application,
     # simply kill the FormManager and the Forms will exit
