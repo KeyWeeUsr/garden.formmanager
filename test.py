@@ -319,7 +319,15 @@ class FormTestCase(unittest.TestCase):
 
         sleep(1)
 
-        # remove form test?
+        # after request the action is popped,
+        # but Form remains in the queue as a key
+        self.assertEqual(fm.queue, {"form4": []})
+
+        # after the Form is removed, the key should too
+        fm.remove_form(form)
+        self.assertNotIn(form.name, fm.forms)
+        self.assertEqual(fm.queue, {})
+
         fm.kill()
         rmtree(tmpdir)
 
