@@ -331,6 +331,53 @@ class FormTestCase(unittest.TestCase):
         fm.kill()
         rmtree(tmpdir)
 
+    def test_run_form_request_call(self):
+        from kivy.garden.formmanager import FormManager, Form, FormManagerException
+
+        fm = FormManager()
+        self._fm_instance = fm
+        fm.run()
+        self.assertEqual(fm.queue, {})
+
+        tmpdir = mkdtemp()
+        tmp_form = join(tmpdir, 'form5.py')
+        form_name = split_ext(basename(abspath(tmp_form)))[0]
+        with open(tmp_form, 'w') as f:
+            f.write(
+                self.form_template.format(form_name.capitalize())
+            )
+
+        form = Form(tmp_form)
+        fm.add_form(form)
+        fm.run_form(form)
+
+        # Form application is basically another Kivy app run in
+        # a separate process, therefore we have to wait for it to load
+        sleep(2)
+
+        self.assertTrue(fm.forms[form.name]['active'])
+
+        # request action for Form1
+        fm.request_action('form5', 'call', ['self', 'open_settings'])
+        self.assertEqual(
+            fm.queue,
+            {'form5': [['call', ['self', 'open_settings']]]}
+        )
+
+        sleep(1)
+
+        # after request the action is popped,
+        # but Form remains in the queue as a key
+        self.assertEqual(fm.queue, {"form5": []})
+
+        # after the Form is removed, the key should too
+        fm.remove_form(form)
+        self.assertNotIn(form.name, fm.forms)
+        self.assertEqual(fm.queue, {})
+
+        fm.kill()
+        rmtree(tmpdir)
+
     def tearDown(self):
         # in case of assertion error, always kill the server
         if self._fm_instance:
