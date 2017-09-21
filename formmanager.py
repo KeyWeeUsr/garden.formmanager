@@ -255,6 +255,12 @@ class FormManager:
         if FormManager.__manager:
             return FormManager.__manager
         else:
+            # overwrite private variables
+            # when creating a new instance
+            FormManager.__forms = []
+            FormManager.__active_forms = []
+            FormManager.__processes = {}
+            FormManager.__queue = {}
             return super(FormManager, cls).__new__(cls)
 
     def __init__(self, port=0, **kwargs):
@@ -383,6 +389,8 @@ class FormManager:
         if form not in self.__forms:
             return
 
+        if form.name in self.__queue:
+            del self.__queue[form.name]
         self.__forms.remove(form)
 
     def run_form(self, form):
